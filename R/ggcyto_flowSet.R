@@ -5,9 +5,11 @@
 #'   size, shape, line type -- see individual geom functions for more details)
 #' @param filter a flowcore gate object or a function that takes flowSet and channels as input and returns a data-dependent flowcore gate
 #'                The gate is used to filter the flow data before it is plotted. 
+#' @param max_nrow_to_plot the maximum number of cells to be plotted. When the actual data exceeds it, The subsampling process will be triggered to speed up plotting. Default is 2e5.To turn off the subsampling, simply set it to a large enough number or Inf
 #' @param ... ignored
 #' @method ggcyto flowSet
 #' @return a ggcyto_GatingSet object which is a subclass of ggcyto class.
+#' @importFrom rlang quo_name
 #' @export
 #' @examples
 #' 
@@ -36,22 +38,22 @@
 #' p <- p + geom_hex(bins = 128)
 #' p
 #'
-ggcyto.flowSet <- function(data, mapping, filter = NULL, ...){
+ggcyto.flowSet <- function(data, mapping, filter = NULL, max_nrow_to_plot = 5e4, ...){
   #add empty layers recording
   
   
   fs <- data
   #instead of using ggplot.default method to contruct the ggplot object
   # we call the underlining s3 method directly to avoid foritying data at this stage
-  p <- ggplot2:::ggplot.data.frame(fs, mapping, ...)
+  p <- ggplot.data.frame(fs, mapping, ...)
   p[["layer.history"]] <- list()
   
   if(!missing(mapping)){
     p[["layer.history"]][["mapping"]] = mapping  
     
+    dims <- mapping[grepl("[x|y]", names(mapping))]
+    dims <- sapply(dims,quo_name)
     
-    dims <- sapply(mapping,as.character)
-    dims <- dims[grepl("[x|y]", names(dims))]
     
     #update x , y with actual channel name
     frm <- getFlowFrame(fs)
@@ -67,6 +69,8 @@ ggcyto.flowSet <- function(data, mapping, filter = NULL, ...){
     
     #attach dims to data for more efficient fortify
     attr(fs, "dims") <- dims.tbl
+    if(is.null(filter)&&is.finite(max_nrow_to_plot))
+      filter <- sampleFilter(size = max_nrow_to_plot)
     attr(fs, "filter") <- filter
     p[["fs"]] <- fs  
     p[["data"]] <- fs #update data as well
@@ -88,6 +92,7 @@ ggcyto.flowSet <- function(data, mapping, filter = NULL, ...){
   p[["GeomStats"]] <- list()
   
   p <- p + ggcyto_par_default()
+  p <-  p + guides(fill=FALSE) #the counts at legend could be reflecting the subsampled data and we want to hide this from user to avoid confusion
   
   p
 }
