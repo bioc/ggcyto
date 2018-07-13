@@ -2,7 +2,7 @@
 % Please edit documentation in R/geom_stats.R
 \name{geom_stats}
 \alias{geom_stats}
-\title{Popluation statistics layer}
+\title{Add a popluation statistics layer to a ggcyto plot.}
 \usage{
 geom_stats(gate = NULL, ..., value = NULL, type = "percent",
   negated = FALSE, adjust = 0.5, label.padding = unit(0.05, "lines"),
@@ -16,7 +16,7 @@ if not supplied, ggcyto then tries to parse the gate from the first geom_gate la
 
 \item{value}{the pre-calculated stats value. when supplied, the stats computing is skipped.}
 
-\item{type}{can be "percent", "count" or "MFI" (MFI is currently not supported yet).}
+\item{type}{a vector of strings to specify the stats types. can be any or multiple values of "percent", "count", "gate_name", or "MFI" (MFI is currently not supported yet).}
 
 \item{negated}{whether the gate needs to be negated}
 
@@ -30,10 +30,10 @@ if not supplied, ggcyto then tries to parse the gate from the first geom_gate la
 a geom_popStats layer
 }
 \description{
-It is a virtual layer and will be instanatiated as geom_label layer within ggycto.+ operator.
+This is a virtual layer and will be instanatiated as geom_label layer within ggycto.+ operator.
 }
 \details{
-So it is dedicated for ggcyto context and thus can't not be added to ggplot object directly.
+So it is dedicated for ggcyto context and thus cannot be added to ggplot object directly.
 }
 \examples{
 dataDir <- system.file("extdata",package="flowWorkspaceData")
@@ -43,4 +43,8 @@ p
 # add gate and stats layer
 p + geom_gate("CD4") + geom_stats()
 
+# display gate name
+p + geom_gate(c("CD4", "CD8")) + geom_stats(type = "gate_name")
+# display gate name and percent
+p + geom_gate(c("CD4", "CD8")) + geom_stats(type = c("gate_name", "percent"))
 }

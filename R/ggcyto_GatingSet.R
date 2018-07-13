@@ -133,7 +133,7 @@ add_ggcyto_gs <- function(e1, e2){
     
     for(node in nodes)
     {
-      gate <- getGate(gs, node)
+      gate <- filterList(getGate(gs, node))
       #must convert bool gate to indices since
       #flowset doesn't know about booleanFilter
       if(is(gate[[1]], "booleanFilter"))
@@ -165,7 +165,7 @@ add_ggcyto_gs <- function(e1, e2){
     if(is.character(gates)){#if it is character then use it as node names
       #update the gate argument with the actual gates
       for(node in gates){
-        gates <- getGate(gs, node)
+        gates <- filterList(getGate(gs, node))
        
         stat_type <- e2[["type"]]
         value <- e2[["value"]]
@@ -173,10 +173,15 @@ add_ggcyto_gs <- function(e1, e2){
         
         #grab the pre-calculated stats
         if(is.null(value)){
-          if(stat_type == "count")
-            value <- lapply(gs, getTotal, y = node)
-          else if(stat_type == "percent")
-            value <- lapply(gs, getProp, y = node)
+          value <- lapply(stat_type, function(stype){
+            if(stype == "count")
+              lapply(gs, getTotal, y = node)
+            else if(stype == "percent")
+              lapply(gs, getProp, y = node)
+            else if(stype == "gate_name")
+              sapply(sampleNames(gs), function(sn)basename(node), simplify = FALSE)
+          })
+          
         }
         
        negated <- flowWorkspace:::isNegated(gs[[1]], node)

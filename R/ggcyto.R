@@ -1,4 +1,4 @@
-#' Create a new ggcyto plot
+#' Plot cytometry data using the ggcyto API
 #'
 #' \code{ggcyto()} initializes a ggcyto object that inherits ggplot class.
 #' Similarly the + operator can be used to add layers to the
@@ -13,7 +13,7 @@
 #' @import methods ggplot2 flowCore ncdfFlow flowWorkspace
 #' @export
 #' @keywords internal
-#' @param data default cytometry data set.(flowSet,flowFrame)
+#' @param data The data source. A core cytometry data structure. (flowSet,flowFrame, GatingSet or GatingHierarchy)
 #' @param ... other arguments passed to specific methods
 #' @examples
 #' 
@@ -189,8 +189,13 @@ as.ggplot <- function(x){
     }
     
   }
-  stats_limits <- as.data.frame(stats_limits, check.names = FALSE)
-  stats_limits[["density"]] <- c(0,1e-4)
+  if(!is.null(data_range))
+  {
+    stats_limits <- as.data.frame(stats_limits, check.names = FALSE)
+    stats_limits[["density"]] <- c(0,1e-4)
+    
+  }else
+    stats_limits <- NULL
   fs <- x[["fs"]]
   #lazy parsing stats layer since the stats_limits is set at the end
   for(e2 in x[["GeomStats"]])
@@ -231,7 +236,8 @@ as.ggplot <- function(x){
     #add default density range
     #In order to ensure the stats visiblity
     #try to put it closer to zero because we don't know the actual density range
-    data_range <- as.data.frame(data_range)
+    if(!is.null(data_range))
+      data_range <- as.data.frame(data_range)
     
     
     negated <- e2[["negated"]]
@@ -272,7 +278,7 @@ as.ggplot <- function(x){
       e2.new <- eval(thisCall)
       attr(e2.new, "is.recorded") <- TRUE
       # update aes
-      stats_mapping <- aes_string(label = stat_type)
+      stats_mapping <- aes_string(label = "value")
       #add y aes for 1d density plot
       dims <- x$mapping[grepl("[x|y]", names(x$mapping))]
       dims <- sapply(dims, quo_name)
